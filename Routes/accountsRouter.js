@@ -12,7 +12,7 @@ app.get('/', async (_, res) => {
   }
 });
 
-app.put('/:agencia/:conta/:value', async (req, res) => {
+app.put('/deposito/:agencia/:conta/:value', async (req, res) => {
   try {
     const account = await accountModel.findOne({
       agencia: req.params.agencia,
