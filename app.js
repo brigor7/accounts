@@ -1,5 +1,5 @@
 import express from 'express';
-import { conectarBD } from './Model/accounts.js';
+import { conectarBD, accountModel } from './Model/accounts.js';
 
 const app = new express();
 const port = 3000;
