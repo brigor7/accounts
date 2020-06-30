@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const uri =
-  'mongodb+srv://brigor_m0ng0:B@nc0_m0ng0@cluster0-fi27e.gcp.mongodb.net/grades?retryWrites=true&w=majority';
+  'mongodb+srv://brigor_m0ng0:B@nc0_m0ng0@cluster0-fi27e.gcp.mongodb.net/account?retryWrites=true&w=majority';
 
 function conectarBD() {
   try {
