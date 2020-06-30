@@ -3,9 +3,13 @@ import { accountModel } from '../Model/accounts.js';
 
 const app = express();
 
-app.get('/', (_, res) => {
-  const account = accountModel.find({});
-  res.send(account);
+app.get('/', async (_, res) => {
+  try {
+    const account = await accountModel.find({});
+    res.send(account);
+  } catch (error) {
+    res.status(500).send('Erro ao acessar Get(): ' + error);
+  }
 });
 
 export { app as router };
