@@ -20,10 +20,7 @@ app.get('/consulta/:agencia/:conta', async (req, res) => {
       agencia: req.params.agencia,
       conta: req.params.conta,
     });
-    if (!account) {
-      res.status(404).send('Conta e Agencia não encontrados.');
-      return;
-    }
+    contaInexistente(res, account);
     res.send(`saldo: $${account.balance}`);
   } catch (error) {
     res.status(500).send('Erro ao acessar Get(): ' + error);
@@ -37,10 +34,7 @@ app.put('/deposito/:agencia/:conta/:value', async (req, res) => {
       conta: req.params.conta,
     });
 
-    if (!account) {
-      res.status(404).send('Conta e Agencia não encontrados.');
-      return;
-    }
+    contaInexistente(res, account);
     //Atualizando valor do saldo
     account.balance += Number(req.params.value);
 
@@ -62,10 +56,7 @@ app.put('/saque/:agencia/:conta/:value', async (req, res) => {
       conta: req.params.conta,
     });
 
-    if (!account) {
-      res.status(404).send('Conta e Agencia não encontrados.');
-      return;
-    }
+    contaInexistente(res, account);
     //Atualizando valor do saldo
     if (account.balance - (Number(req.params.value) + TARIFA_SAQUE) < 0) {
       res
@@ -92,10 +83,7 @@ app.delete('/remover/:agencia/:conta', async (req, res) => {
       agencia: req.params.agencia,
       conta: req.params.conta,
     });
-    if (!account) {
-      res.status(404).send('Conta e Agencia não encontrados no sistema.');
-      return;
-    }
+    contaInexistente(res, account);
     //Realiza a exclusão do registro
     const retorno = await accountModel.findOneAndDelete({
       agencia: req.params.agencia,
@@ -120,8 +108,8 @@ app.put(
 
       const contaOrigem = await buscarConta(req, 'origem');
       const contaDestino = await buscarConta(req, 'destino');
-      contaEhInexistente(res, contaOrigem);
-      contaEhInexistente(res, contaDestino);
+      contaInexistente(res, contaOrigem);
+      contaInexistente(res, contaDestino);
 
       /**Verificando se as contas são da mesma agencia */
       if (contaOrigem.agencia === contaDestino.agencia) {
@@ -174,7 +162,7 @@ async function buscarConta(req, fonte) {
   return conta;
 }
 
-function contaEhInexistente(res, conta) {
+function contaInexistente(res, conta) {
   if (!conta) {
     res.status(404).send('Conta não encontrada.');
     return;
