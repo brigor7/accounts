@@ -80,7 +80,7 @@ app.put('/saque/:agencia/:conta/:value', async (req, res) => {
       account,
       { new: true }
     );
-    res.send(newAccount);
+    res.send(`Saldo atual da conta: $${newAccount.balance}`);
   } catch (error) {
     res.status(500).send('Erro ao acessar Get(): ' + error);
   }
@@ -118,50 +118,76 @@ app.put(
     try {
       const valorTransferencia = Number(req.params.valor);
 
-      /**Buscar dados da agencia de origem */
-      const contaOrigem = await accountModel.findOne({
-        agencia: req.params.agOrigem,
-        conta: req.params.ctOrigem,
-      });
-
-      /**Verificando a existencia da conta de origem */
-
-      if (!contaOrigem) {
-        res.status(404).send('Conta de origem não encontrada.');
-        return;
-      }
-
-      /**Buscar dados da agencia de destino */
-      const contaDestino = await accountModel.findOne({
-        agencia: req.params.agDestino,
-        conta: req.params.ctDestino,
-      });
-
-      /**Verificando a existencia da conta de destino */
-
-      if (!contaDestino) {
-        res.status(404).send('Conta de destino não encontrada.');
-        return;
-      }
+      const contaOrigem = await buscarConta(req, 'origem');
+      const contaDestino = await buscarConta(req, 'destino');
+      contaEhInexistente(res, contaOrigem);
+      contaEhInexistente(res, contaDestino);
 
       /**Verificando se as contas são da mesma agencia */
       if (contaOrigem.agencia === contaDestino.agencia) {
-        res.send('contas são da mesma agencia');
+        saldoInsuficiente(res, contaOrigem, valorTransferencia);
+        contaOrigem.balance -= valorTransferencia;
+        contaDestino.balance += valorTransferencia;
+        await transferirValores(contaOrigem, contaDestino);
       } else {
         /**Verificar se saldo da conta ficará negativo */
-        let saldo = valorTransferencia + TARIFA_TRASFERENCIA_OUTRA_AGENCIA;
-        if (contaOrigem.balance - saldo < 0) {
-          res
-            .status(203)
-            .send('Saldo insuficiente para realizar transferencia.');
-        } else {
-          res.send('constas são de outra agencia - com saldo suficiente');
-        }
+        let valorComTarifa =
+          valorTransferencia + TARIFA_TRASFERENCIA_OUTRA_AGENCIA;
+        saldoInsuficiente(res, contaOrigem, valorComTarifa);
+        contaOrigem.balance -= valorComTarifa;
+        contaDestino.balance += valorTransferencia;
+        await transferirValores(contaOrigem, contaDestino);
       }
+      res.send(`Saldo da conta de origem: $${contaOrigem.balance}`);
     } catch (error) {
       res.status(500).send('Erro ao realizar a Transferencia: ' + error);
     }
   }
 );
+
+async function transferirValores(contaOrigem, contaDestino) {
+  /**Atualizando a conta de origem */
+  await accountModel.findOneAndUpdate(
+    { agencia: contaOrigem.agencia, conta: contaOrigem.conta },
+    contaOrigem
+  );
+  /**Atualizando a conta de destino */
+  await accountModel.findOneAndUpdate(
+    { agencia: contaDestino.agencia, conta: contaDestino.conta },
+    contaDestino
+  );
+}
+
+async function buscarConta(req, fonte) {
+  let conta = null;
+  if (fonte == 'origem') {
+    conta = await accountModel.findOne({
+      agencia: req.params.agOrigem,
+      conta: req.params.ctOrigem,
+    });
+  } else {
+    conta = await accountModel.findOne({
+      agencia: req.params.agDestino,
+      conta: req.params.ctDestino,
+    });
+  }
+  return conta;
+}
+
+function contaEhInexistente(res, conta) {
+  if (!conta) {
+    res.status(404).send('Conta não encontrada.');
+    return;
+  }
+}
+
+function saldoInsuficiente(res, conta, valor) {
+  if (conta.balance - valor < 0) {
+    res
+      .status(203)
+      .send('Saldo insuficiente para realizar transferencia na mesma agência.');
+    return;
+  }
+}
 
 export { app as router };
