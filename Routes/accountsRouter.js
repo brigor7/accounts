@@ -27,15 +27,24 @@ app.get('/consulta/:agencia/:conta', async (req, res) => {
   }
 });
 
-app.get('/avg/:agencia', async (req, res) => {
+app.get('/menorSaldo/:tamanho', async (req, res) => {
   try {
-    const account = await accountModel.find({
-      agencia: req.params.agencia,
-    });
+    const account = await accountModel.aggregate([
+      {
+        $project: {
+          name: '$name',
+          agencia: '$agencia',
+          conta: '$conta',
+          balance: '$balance',
+        },
+      },
+      { $sort: { balance: 1 } },
+      { $limit: Number(req.params.tamanho) },
+    ]);
     contaInexistente(res, account);
     res.send(account);
   } catch (error) {
-    res.status(500).send('Erro de acesso ao endPoint avg: ' + error);
+    res.status(500).send('Erro de acesso ao endPoint menorSaldo: ' + error);
   }
 });
 
