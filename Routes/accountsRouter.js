@@ -66,7 +66,7 @@ app.put('/saque/:agencia/:conta/:value', async (req, res) => {
       return;
     }
     //Atualizando valor do saldo
-    if (account.balance - Number(req.params.value) < 0) {
+    if (account.balance - (Number(req.params.value) + TARIFA_SAQUE) < 0) {
       res
         .status(404)
         .send('Conta com saldo negativo. Não é possivel fazer saque.');
@@ -80,6 +80,35 @@ app.put('/saque/:agencia/:conta/:value', async (req, res) => {
       { new: true }
     );
     res.send(newAccount);
+  } catch (error) {
+    res.status(500).send('Erro ao acessar Get(): ' + error);
+  }
+});
+
+app.delete('/remover/:agencia/:conta', async (req, res) => {
+  const agencia = req.params.agencia;
+  const cont = req.params.conta;
+
+  try {
+    const account = await accountModel.findOne({
+      agencia: req.params.agencia,
+      conta: req.params.conta,
+    });
+    if (!account) {
+      res.status(404).send('Conta e Agencia não encontrados no sistema.');
+      return;
+    }
+    //Realiza a exclusão do registro
+    const retorno = await accountModel.findOneAndDelete({
+      agencia: req.params.agencia,
+      conta: req.params.conta,
+    });
+
+    /**Retornar o número de contas ativas para esta agência. */
+    const agenciasAtivas = await accountModel.find({
+      agencia: req.params.agencia,
+    });
+    res.send(agenciasAtivas);
   } catch (error) {
     res.status(500).send('Erro ao acessar Get(): ' + error);
   }
