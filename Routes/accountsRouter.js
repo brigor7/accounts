@@ -10,7 +10,7 @@ app.get('/', async (_, res) => {
     const account = await accountModel.find({});
     res.send(account);
   } catch (error) {
-    res.status(500).send('Erro ao acessar Get(): ' + error);
+    res.status(500).send('Erro de acesso ao endpoint get: ' + error);
   }
 });
 
@@ -23,7 +23,19 @@ app.get('/consulta/:agencia/:conta', async (req, res) => {
     contaInexistente(res, account);
     res.send(`saldo: $${account.balance}`);
   } catch (error) {
-    res.status(500).send('Erro ao acessar Get(): ' + error);
+    res.status(500).send('Erro de acesso ao endpoint consulta:  ' + error);
+  }
+});
+
+app.get('/avg/:agencia', async (req, res) => {
+  try {
+    const account = await accountModel.find({
+      agencia: req.params.agencia,
+    });
+    contaInexistente(res, account);
+    res.send(account);
+  } catch (error) {
+    res.status(500).send('Erro de acesso ao endPoint avg: ' + error);
   }
 });
 
@@ -45,7 +57,7 @@ app.put('/deposito/:agencia/:conta/:value', async (req, res) => {
     );
     res.send(newAccount);
   } catch (error) {
-    res.status(500).send('Erro ao acessar Get(): ' + error);
+    res.status(500).send('Erro de acesso ao endpoint deposito: ' + error);
   }
 });
 
@@ -73,7 +85,7 @@ app.put('/saque/:agencia/:conta/:value', async (req, res) => {
     );
     res.send(`Saldo atual da conta: $${newAccount.balance}`);
   } catch (error) {
-    res.status(500).send('Erro ao acessar Get(): ' + error);
+    res.status(500).send('Erro de acesso ao endpoint saque: ' + error);
   }
 });
 
@@ -96,7 +108,7 @@ app.delete('/remover/:agencia/:conta', async (req, res) => {
     });
     res.send(agenciasAtivas);
   } catch (error) {
-    res.status(500).send('Erro ao acessar Get(): ' + error);
+    res.status(500).send('Erro de acesso ao endpoint remover: ' + error);
   }
 });
 
@@ -128,7 +140,9 @@ app.put(
       }
       res.send(`Saldo da conta de origem: $${contaOrigem.balance}`);
     } catch (error) {
-      res.status(500).send('Erro ao realizar a Transferencia: ' + error);
+      res
+        .status(500)
+        .send('Erro de acesso ao endpoint transferencia: ' + error);
     }
   }
 );
@@ -163,7 +177,7 @@ async function buscarConta(req, fonte) {
 }
 
 function contaInexistente(res, conta) {
-  if (!conta) {
+  if (!conta || conta.length === 0) {
     res.status(404).send('Conta não encontrada.');
     return;
   }
