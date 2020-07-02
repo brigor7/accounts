@@ -6,6 +6,7 @@ import {
   smallerBalance,
   biggerBalance,
   avgAccounts,
+  deposit,
 } from '../Controller/accountController.js';
 
 const app = express();
@@ -85,22 +86,11 @@ app.get('/private', async (req, res) => {
 });
 
 app.put('/deposito/:agencia/:conta/:value', async (req, res) => {
+  const agencia = req.params.agencia;
+  const conta = req.params.conta;
+  const balance = req.params.value;
   try {
-    const account = await accountModel.findOne({
-      agencia: req.params.agencia,
-      conta: req.params.conta,
-    });
-
-    contaInexistente(res, account);
-    //Atualizando valor do saldo
-    account.balance += Number(req.params.value);
-
-    const newAccount = await accountModel.findOneAndUpdate(
-      { agencia: req.params.agencia, conta: req.params.conta },
-      account,
-      { new: true }
-    );
-    res.send(newAccount);
+    deposit(agencia, conta, balance, res);
   } catch (error) {
     res.status(500).send('Erro de acesso ao endpoint deposito: ' + error);
   }

@@ -74,6 +74,24 @@ async function avgAccounts(agencia, res) {
   res.send(account);
 }
 
+async function deposit(agencia, conta, balance, res) {
+  const account = await accountModel.findOne({
+    agencia: agencia,
+    conta: conta,
+  });
+
+  contaInexistente(res, account);
+  //Atualizando valor do saldo
+  account.balance += Number(balance);
+
+  const newAccount = await accountModel.findOneAndUpdate(
+    { agencia: agencia, conta: conta },
+    account,
+    { new: true }
+  );
+  res.send(newAccount);
+}
+
 /**Suport functions */
 function contaInexistente(res, conta) {
   if (!conta || conta.length === 0) {
@@ -89,4 +107,5 @@ export {
   smallerBalance,
   biggerBalance,
   avgAccounts,
+  deposit,
 };
