@@ -4,6 +4,7 @@ import {
   searchAll,
   consultAccount,
   smallerBalance,
+  biggerBalance,
 } from '../Controller/accountController.js';
 
 const app = express();
@@ -37,20 +38,7 @@ app.get('/menorSaldo/:tamanho', async (req, res) => {
 
 app.get('/maiorSaldo/:tamanho', async (req, res) => {
   try {
-    const account = await accountModel.aggregate([
-      {
-        $project: {
-          agencia: '$agencia',
-          conta: '$conta',
-          name: '$name',
-          balance: '$balance',
-        },
-      },
-      { $sort: { balance: -1, name: 1 } },
-      { $limit: Number(req.params.tamanho) },
-    ]);
-    contaInexistente(res, account);
-    res.send(account);
+    const account = await biggerBalance(req, res);
   } catch (error) {
     res.status(500).send('Erro de acesso ao endPoint menorSaldo: ' + error);
   }
