@@ -1,6 +1,10 @@
 import express from 'express';
 import { accountModel } from '../Model/accounts.js';
-import { searchAll, consultAccount } from '../Controller/accountController.js';
+import {
+  searchAll,
+  consultAccount,
+  smallerBalance,
+} from '../Controller/accountController.js';
 
 const app = express();
 const TARIFA_SAQUE = 1;
@@ -25,20 +29,7 @@ app.get('/consulta/:agencia/:conta', async (req, res) => {
 
 app.get('/menorSaldo/:tamanho', async (req, res) => {
   try {
-    const account = await accountModel.aggregate([
-      {
-        $project: {
-          name: '$name',
-          agencia: '$agencia',
-          conta: '$conta',
-          balance: '$balance',
-        },
-      },
-      { $sort: { balance: 1 } },
-      { $limit: Number(req.params.tamanho) },
-    ]);
-    contaInexistente(res, account);
-    res.send(account);
+    const account = await smallerBalance(req, res);
   } catch (error) {
     res.status(500).send('Erro de acesso ao endPoint menorSaldo: ' + error);
   }

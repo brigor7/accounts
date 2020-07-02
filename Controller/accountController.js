@@ -31,6 +31,23 @@ async function consultAccount(req, res) {
   res.send(`Saldo: $${account.balance}`);
 }
 
+async function smallerBalance(req, res) {
+  const account = await accountModel.aggregate([
+    {
+      $project: {
+        name: '$name',
+        agencia: '$agencia',
+        conta: '$conta',
+        balance: '$balance',
+      },
+    },
+    { $sort: { balance: 1 } },
+    { $limit: Number(req.params.tamanho) },
+  ]);
+  contaInexistente(res, account);
+  res.send(account);
+}
+
 /**Suport functions */
 function contaInexistente(res, conta) {
   if (!conta || conta.length === 0) {
@@ -38,4 +55,5 @@ function contaInexistente(res, conta) {
     return;
   }
 }
-export { conectarBD, searchAll, consultAccount };
+
+export { conectarBD, searchAll, consultAccount, smallerBalance };
