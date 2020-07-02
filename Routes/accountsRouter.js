@@ -26,24 +26,31 @@ app.get('/', async (_, res) => {
 });
 
 app.get('/consulta/:agencia/:conta', async (req, res) => {
+  const agencia = req.params.agencia;
+  const conta = req.params.conta;
   try {
-    await consultAccount(req, res);
+    const account = await consultAccount(agencia, conta);
+    res.send(`Saldo: $${account.balance}`);
   } catch (error) {
     res.status(500).send('Erro de acesso ao endpoint consulta:  ' + error);
   }
 });
 
 app.get('/menorSaldo/:tamanho', async (req, res) => {
+  const tamanho = req.params.tamanho;
   try {
-    const account = await smallerBalance(req, res);
+    const account = await smallerBalance(tamanho);
+    res.send(account);
   } catch (error) {
     res.status(500).send('Erro de acesso ao endPoint menorSaldo: ' + error);
   }
 });
 
 app.get('/maiorSaldo/:tamanho', async (req, res) => {
+  const tamanho = req.params.tamanho;
   try {
-    const account = await biggerBalance(req, res);
+    const account = await biggerBalance(tamanho);
+    res.send(account);
   } catch (error) {
     res.status(500).send('Erro de acesso ao endPoint menorSaldo: ' + error);
   }
@@ -52,7 +59,8 @@ app.get('/maiorSaldo/:tamanho', async (req, res) => {
 app.get('/avg/:agencia', async (req, res) => {
   let agencia = Number(req.params.agencia);
   try {
-    await avgAccounts(agencia, res);
+    const account = await avgAccounts(agencia);
+    res.send(account);
   } catch (error) {
     res.status(500).send('Erro de acesso ao endPoint avg: ' + error);
   }
@@ -63,7 +71,8 @@ app.put('/deposito/:agencia/:conta/:value', async (req, res) => {
   const conta = req.params.conta;
   const balance = req.params.value;
   try {
-    deposit(agencia, conta, balance, res);
+    const account = await deposit(agencia, conta, balance);
+    res.send(account);
   } catch (error) {
     res.status(500).send('Erro de acesso ao endpoint deposito: ' + error);
   }
@@ -74,9 +83,10 @@ app.put('/saque/:agencia/:conta/:value', async (req, res) => {
   const conta = req.params.conta;
   const balance = req.params.value;
   try {
-    withdraw(agencia, conta, balance, res);
+    const account = await withdraw(agencia, conta, balance);
+    res.send(`Saldo atual da conta: $${account.balance}`);
   } catch (error) {
-    res.status(500).send('Erro de acesso ao endpoint saque: ' + error);
+    res.status(500).send(error);
   }
 });
 

@@ -24,16 +24,16 @@ async function searchAll() {
   return account;
 }
 
-async function consultAccount(req, res) {
+async function consultAccount(agencia, conta) {
   const account = await accountModel.findOne({
-    agencia: req.params.agencia,
-    conta: req.params.conta,
+    agencia: agencia,
+    conta: conta,
   });
-  contaInexistente(res, account);
-  res.send(`Saldo: $${account.balance}`);
+  contaInexistente(account);
+  return account;
 }
 
-async function smallerBalance(req, res) {
+async function smallerBalance(tamanho) {
   const account = await accountModel.aggregate([
     {
       $project: {
@@ -44,13 +44,13 @@ async function smallerBalance(req, res) {
       },
     },
     { $sort: { balance: 1 } },
-    { $limit: Number(req.params.tamanho) },
+    { $limit: Number(tamanho) },
   ]);
-  contaInexistente(res, account);
-  res.send(account);
+  contaInexistente(account);
+  return account;
 }
 
-async function biggerBalance(req, res) {
+async function biggerBalance(tamanho) {
   const account = await accountModel.aggregate([
     {
       $project: {
@@ -61,25 +61,25 @@ async function biggerBalance(req, res) {
       },
     },
     { $sort: { balance: -1, name: 1 } },
-    { $limit: Number(req.params.tamanho) },
+    { $limit: Number(tamanho) },
   ]);
-  contaInexistente(res, account);
-  res.send(account);
+  contaInexistente(account);
+  return account;
 }
 
-async function avgAccounts(agencia, res) {
+async function avgAccounts(agencia) {
   const account = await accountModel.aggregate([
     { $group: { _id: '$agencia', media: { $avg: '$balance' } } },
     { $match: { _id: agencia } },
   ]);
-  contaInexistente(res, account);
-  res.send(account);
+  contaInexistente(account);
+  return account;
 }
 
-async function deposit(agencia, conta, balance, res) {
+async function deposit(agencia, conta, balance) {
   const account = await searchAccount(agencia, conta);
 
-  contaInexistente(res, account);
+  contaInexistente(account);
   //Atualizando valor do saldo
   account.balance += Number(balance);
 
@@ -88,15 +88,15 @@ async function deposit(agencia, conta, balance, res) {
     account,
     { new: true }
   );
-  res.send(newAccount);
+  return newAccount;
 }
 
 async function withdraw(agencia, conta, balance, res) {
   let saque_e_tarifa = Number(balance) + TARIFA_SAQUE;
 
   const account = await searchAccount(agencia, conta);
-  contaInexistente(res, account);
-  saldoInsuficiente(res, account, saque_e_tarifa);
+  contaInexistente(account);
+  saldoInsuficiente(account, saque_e_tarifa);
 
   //Atualizando valor do saldo
   account.balance -= saque_e_tarifa;
@@ -105,15 +105,13 @@ async function withdraw(agencia, conta, balance, res) {
     account,
     { new: true }
   );
-  res.send(`Saldo atual da conta: $${newAccount.balance}`);
+  return newAccount;
 }
 
 async function deleteAccount(agencia, conta) {
-  contaInexistenteN(await searchAccount(agencia, conta));
+  contaInexistente(await searchAccount(agencia, conta));
   await desativarConta(agencia, conta);
 }
-
-/**Suport functions */
 
 async function searchAgencias(agencia) {
   const agenciasAtivas = await accountModel.find({
@@ -122,6 +120,7 @@ async function searchAgencias(agencia) {
   return agenciasAtivas;
 }
 
+/**Suport functions */
 async function desativarConta(agencia, conta) {
   await accountModel.findOneAndDelete({
     agencia: agencia,
@@ -166,23 +165,15 @@ async function buscarConta(req, fonte) {
   return conta;
 }
 
-function contaInexistente(res, account) {
-  if (!account || account.length === 0) {
-    res.status(404).send('Conta não encontrada.');
-    return;
-  }
-}
-
-function contaInexistenteN(account) {
+function contaInexistente(account) {
   if (!account || account.length === 0) {
     throw new Error('Conta não encontrada.');
   }
 }
 
-function saldoInsuficiente(res, conta, valor) {
-  if (conta.balance - valor < 0) {
-    res.status(203).send('Saldo insuficiente para realizar esta operação.');
-    return;
+function saldoInsuficiente(account, valor) {
+  if (account.balance - valor < 0) {
+    throw new Error('Saldo insuficiente para realizar esta operação.');
   }
 }
 
