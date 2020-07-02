@@ -1,6 +1,6 @@
 import express from 'express';
 import { accountModel } from '../Model/accounts.js';
-import { searchAll } from '../Controller/accountController.js';
+import { searchAll, consultAccount } from '../Controller/accountController.js';
 
 const app = express();
 const TARIFA_SAQUE = 1;
@@ -17,12 +17,7 @@ app.get('/', async (_, res) => {
 
 app.get('/consulta/:agencia/:conta', async (req, res) => {
   try {
-    const account = await accountModel.findOne({
-      agencia: req.params.agencia,
-      conta: req.params.conta,
-    });
-    contaInexistente(res, account);
-    res.send(`saldo: $${account.balance}`);
+    await consultAccount(req, res);
   } catch (error) {
     res.status(500).send('Erro de acesso ao endpoint consulta:  ' + error);
   }

@@ -22,4 +22,20 @@ async function searchAll() {
   return account;
 }
 
-export { conectarBD, searchAll };
+async function consultAccount(req, res) {
+  const account = await accountModel.findOne({
+    agencia: req.params.agencia,
+    conta: req.params.conta,
+  });
+  contaInexistente(res, account);
+  res.send(`Saldo: $${account.balance}`);
+}
+
+/**Suport functions */
+function contaInexistente(res, conta) {
+  if (!conta || conta.length === 0) {
+    res.status(404).send('Account not found with informed parameters.');
+    return;
+  }
+}
+export { conectarBD, searchAll, consultAccount };
