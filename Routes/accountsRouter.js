@@ -83,6 +83,36 @@ app.get('/avg/:agencia', async (req, res) => {
   }
 });
 
+app.get('/private', async (req, res) => {
+  try {
+    /**Buscando CLientes */
+    const accounts = await accountModel.aggregate([
+      {
+        $group: { _id: '$agencia', balance: { $max: '$balance' } },
+      },
+    ]);
+    contaInexistente(res, accounts);
+
+    // /**Transferindo clientes */
+    // let pvtAccount = null;
+    // let pvtAccounts = [];
+    // accounts.forEach(async (account) => {
+    //   pvtAccount = await accountModel.findOne({
+    //     agencia: account._id,
+    //     balance: account.balance,
+    //   });
+    //   pvtAccount.agencia = 99;
+    //   console.log(pvtAccount);
+    //   pvtAccounts.push(pvtAccount);
+    //   //await accountModel.findOneAndUpdate({ _id: pvtAccount._id,  });
+    // });
+    //let biggersAccounts = await accountModel.find({ agencia: 99 });
+    res.send(accounts);
+  } catch (error) {
+    res.status(500).send('Erro de acesso ao endPoint private: ' + error);
+  }
+});
+
 app.put('/deposito/:agencia/:conta/:value', async (req, res) => {
   try {
     const account = await accountModel.findOne({
