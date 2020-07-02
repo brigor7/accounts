@@ -8,6 +8,8 @@ import {
   avgAccounts,
   deposit,
   withdraw,
+  deleteAccount,
+  searchAgencias,
 } from '../Controller/accountController.js';
 
 const app = express();
@@ -78,26 +80,18 @@ app.put('/saque/:agencia/:conta/:value', async (req, res) => {
   }
 });
 
-app.delete('/remover/:agencia/:conta', async (req, res) => {
+app.delete('/remover/:agencia/:conta', async (req, res, next) => {
+  const agencia = req.params.agencia;
+  const conta = req.params.conta;
   try {
-    const account = await accountModel.findOne({
-      agencia: req.params.agencia,
-      conta: req.params.conta,
-    });
-    contaInexistente(res, account);
-    //Realiza a exclusão do registro
-    const retorno = await accountModel.findOneAndDelete({
-      agencia: req.params.agencia,
-      conta: req.params.conta,
-    });
-
-    /**Retornar o número de contas ativas para esta agência. */
-    const agenciasAtivas = await accountModel.find({
-      agencia: req.params.agencia,
-    });
-    res.send(agenciasAtivas);
+    await deleteAccount(agencia, conta);
+    const agenciasAtivas = await searchAgencias(agencia);
+    res.send(
+      'Conta desativada. Total de contas ativas na agência: ' +
+        agenciasAtivas.length
+    );
   } catch (error) {
-    res.status(500).send('Erro de acesso ao endpoint remover: ' + error);
+    res.status(500).send(error);
   }
 });
 

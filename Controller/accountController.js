@@ -108,7 +108,26 @@ async function withdraw(agencia, conta, balance, res) {
   res.send(`Saldo atual da conta: $${newAccount.balance}`);
 }
 
+async function deleteAccount(agencia, conta) {
+  contaInexistenteN(await searchAccount(agencia, conta));
+  await desativarConta(agencia, conta);
+}
+
 /**Suport functions */
+
+async function searchAgencias(agencia) {
+  const agenciasAtivas = await accountModel.find({
+    agencia: agencia,
+  });
+  return agenciasAtivas;
+}
+
+async function desativarConta(agencia, conta) {
+  await accountModel.findOneAndDelete({
+    agencia: agencia,
+    conta: conta,
+  });
+}
 
 async function searchAccount(agencia, conta) {
   const account = await accountModel.findOne({
@@ -147,10 +166,16 @@ async function buscarConta(req, fonte) {
   return conta;
 }
 
-function contaInexistente(res, conta) {
-  if (!conta || conta.length === 0) {
+function contaInexistente(res, account) {
+  if (!account || account.length === 0) {
     res.status(404).send('Conta não encontrada.');
     return;
+  }
+}
+
+function contaInexistenteN(account) {
+  if (!account || account.length === 0) {
+    throw new Error('Conta não encontrada.');
   }
 }
 
@@ -170,4 +195,6 @@ export {
   avgAccounts,
   deposit,
   withdraw,
+  deleteAccount,
+  searchAgencias,
 };
