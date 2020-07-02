@@ -10,11 +10,12 @@ import {
   withdraw,
   deleteAccount,
   searchAgencias,
+  transfer,
+  buscarConta,
+  vipAccounts,
 } from '../Controller/accountController.js';
 
 const app = express();
-const TARIFA_SAQUE = 1;
-const TARIFA_TRASFERENCIA_OUTRA_AGENCIA = 8;
 
 app.get('/', async (_, res) => {
   try {
@@ -109,29 +110,11 @@ app.put(
   '/transferencia/:agOrigem/:ctOrigem/:valor/:agDestino/:ctDestino',
   async (req, res) => {
     try {
-      const valorTransferencia = Number(req.params.valor);
-
-      const contaOrigem = await buscarConta(req, 'origem');
+      const valorTransferencia = req.params.valor;
       const contaDestino = await buscarConta(req, 'destino');
-      contaInexistente(res, contaOrigem);
-      contaInexistente(res, contaDestino);
-
-      /**Verificando se as contas são da mesma agencia */
-      if (contaOrigem.agencia === contaDestino.agencia) {
-        saldoInsuficiente(res, contaOrigem, valorTransferencia);
-        contaOrigem.balance -= valorTransferencia;
-        contaDestino.balance += valorTransferencia;
-        await transferirValores(contaOrigem, contaDestino);
-      } else {
-        /**Verificar se saldo da conta ficará negativo */
-        let valorComTarifa =
-          valorTransferencia + TARIFA_TRASFERENCIA_OUTRA_AGENCIA;
-        saldoInsuficiente(res, contaOrigem, valorComTarifa);
-        contaOrigem.balance -= valorComTarifa;
-        contaDestino.balance += valorTransferencia;
-        await transferirValores(contaOrigem, contaDestino);
-      }
-      res.send(`Saldo da conta de origem: $${contaOrigem.balance}`);
+      const contaOrigem = await buscarConta(req, 'origem');
+      const balance = transfer(contaOrigem, contaDestino, valorTransferencia);
+      res.send(`Saldo da conta de origem: $${balance}`);
     } catch (error) {
       res
         .status(500)
@@ -140,79 +123,13 @@ app.put(
   }
 );
 
-app.get('/private', async (req, res) => {
+app.get('/vip', async (req, res) => {
   try {
-    /**Buscando CLientes */
-    const accounts = await accountModel.aggregate([
-      {
-        $group: { _id: '$agencia', balance: { $max: '$balance' } },
-      },
-    ]);
-    contaInexistente(res, accounts);
-
-    // /**Transferindo clientes */
-    // let pvtAccount = null;
-    // let pvtAccounts = [];
-    // accounts.forEach(async (account) => {
-    //   pvtAccount = await accountModel.findOne({
-    //     agencia: account._id,
-    //     balance: account.balance,
-    //   });
-    //   pvtAccount.agencia = 99;
-    //   console.log(pvtAccount);
-    //   pvtAccounts.push(pvtAccount);
-    //   //await accountModel.findOneAndUpdate({ _id: pvtAccount._id,  });
-    // });
-    //let biggersAccounts = await accountModel.find({ agencia: 99 });
+    const accounts = await vipAccounts();
     res.send(accounts);
   } catch (error) {
     res.status(500).send('Erro de acesso ao endPoint private: ' + error);
   }
 });
-
-async function transferirValores(contaOrigem, contaDestino) {
-  /**Atualizando a conta de origem */
-  await accountModel.findOneAndUpdate(
-    { agencia: contaOrigem.agencia, conta: contaOrigem.conta },
-    contaOrigem
-  );
-  /**Atualizando a conta de destino */
-  await accountModel.findOneAndUpdate(
-    { agencia: contaDestino.agencia, conta: contaDestino.conta },
-    contaDestino
-  );
-}
-
-async function buscarConta(req, fonte) {
-  let conta = null;
-  if (fonte == 'origem') {
-    conta = await accountModel.findOne({
-      agencia: req.params.agOrigem,
-      conta: req.params.ctOrigem,
-    });
-  } else {
-    conta = await accountModel.findOne({
-      agencia: req.params.agDestino,
-      conta: req.params.ctDestino,
-    });
-  }
-  return conta;
-}
-
-function contaInexistente(res, conta) {
-  if (!conta || conta.length === 0) {
-    res.status(404).send('Conta não encontrada.');
-    return;
-  }
-}
-
-function saldoInsuficiente(res, conta, valor) {
-  if (conta.balance - valor < 0) {
-    res
-      .status(203)
-      .send('Saldo insuficiente para realizar transferencia na mesma agência.');
-    return;
-  }
-}
 
 export { app as router };

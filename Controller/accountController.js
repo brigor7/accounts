@@ -108,6 +108,26 @@ async function withdraw(agencia, conta, balance, res) {
   return newAccount;
 }
 
+async function transfer(contaOrigem, contaDestino, valorTransferencia) {
+  contaInexistente(contaOrigem);
+  contaInexistente(contaDestino);
+
+  /**Verificando se as contas são da mesma agencia */
+  if (contaOrigem.agencia === contaDestino.agencia) {
+    saldoInsuficiente(contaOrigem, valorTransferencia);
+    contaOrigem.balance -= valorTransferencia;
+    contaDestino.balance += valorTransferencia;
+    await transferirValores(contaOrigem, contaDestino);
+  } else {
+    /**Verificar se saldo da conta ficará negativo */
+    let valorComTarifa = valorTransferencia + TARIFA_TRASFERENCIA_OUTRA_AGENCIA;
+    saldoInsuficiente(contaOrigem, valorComTarifa);
+    contaOrigem.balance -= valorComTarifa;
+    contaDestino.balance += valorTransferencia;
+    await transferirValores(contaOrigem, contaDestino);
+  }
+}
+
 async function deleteAccount(agencia, conta) {
   contaInexistente(await searchAccount(agencia, conta));
   await desativarConta(agencia, conta);
@@ -118,6 +138,31 @@ async function searchAgencias(agencia) {
     agencia: agencia,
   });
   return agenciasAtivas;
+}
+
+async function vipAccounts() {
+  /**Buscando CLientes */
+  const accounts = await accountModel.aggregate([
+    {
+      $group: { _id: '$agencia', balance: { $max: '$balance' } },
+    },
+  ]);
+
+  // /**Transferindo clientes */
+  // let pvtAccount = null;
+  // let pvtAccounts = [];
+  // accounts.forEach(async (account) => {
+  //   pvtAccount = await accountModel.findOne({
+  //     agencia: account._id,
+  //     balance: account.balance,
+  //   });
+  //   pvtAccount.agencia = 99;
+  //   console.log(pvtAccount);
+  //   pvtAccounts.push(pvtAccount);
+  //   //await accountModel.findOneAndUpdate({ _id: pvtAccount._id,  });
+  // });
+  //let biggersAccounts = await accountModel.find({ agencia: 99 });
+  return accounts;
 }
 
 /**Suport functions */
@@ -188,4 +233,7 @@ export {
   withdraw,
   deleteAccount,
   searchAgencias,
+  transfer,
+  buscarConta,
+  vipAccounts,
 };
