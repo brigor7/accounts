@@ -1,5 +1,5 @@
 import express from 'express';
-import { conectarBD, accountModel } from './Model/accounts.js';
+import { conectarBD } from './Controller/accountController.js';
 import { router } from './Routes/accountsRouter.js';
 
 const app = new express();
