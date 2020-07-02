@@ -5,8 +5,6 @@ const URI = 'mongodb://localhost:27017/account?retryWrites=true';
 const TARIFA_SAQUE = 1;
 const TARIFA_TRASFERENCIA_OUTRA_AGENCIA = 8;
 
-//'mongodb+srv://brigor_m0ng0:B@nc0_m0ng0@cluster0-fi27e.gcp.mongodb.net/account?retryWrites=true&w=majority';
-
 function conectarBD() {
   try {
     mongoose.connect(URI, {
