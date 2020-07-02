@@ -2,6 +2,8 @@ import mongoose from 'mongoose';
 import { accountModel } from '../Model/accounts.js';
 
 const URI = 'mongodb://localhost:27017/account?retryWrites=true';
+const TARIFA_SAQUE = 1;
+const TARIFA_TRASFERENCIA_OUTRA_AGENCIA = 8;
 
 //'mongodb+srv://brigor_m0ng0:B@nc0_m0ng0@cluster0-fi27e.gcp.mongodb.net/account?retryWrites=true&w=majority';
 
@@ -75,10 +77,7 @@ async function avgAccounts(agencia, res) {
 }
 
 async function deposit(agencia, conta, balance, res) {
-  const account = await accountModel.findOne({
-    agencia: agencia,
-    conta: conta,
-  });
+  const account = await searchAccount(agencia, conta);
 
   contaInexistente(res, account);
   //Atualizando valor do saldo
@@ -92,10 +91,72 @@ async function deposit(agencia, conta, balance, res) {
   res.send(newAccount);
 }
 
+async function withdraw(agencia, conta, balance, res) {
+  let saque_e_tarifa = Number(balance) + TARIFA_SAQUE;
+
+  const account = await searchAccount(agencia, conta);
+  contaInexistente(res, account);
+  saldoInsuficiente(res, account, saque_e_tarifa);
+
+  //Atualizando valor do saldo
+  account.balance -= saque_e_tarifa;
+  const newAccount = await accountModel.findOneAndUpdate(
+    { agencia: agencia, conta: conta },
+    account,
+    { new: true }
+  );
+  res.send(`Saldo atual da conta: $${newAccount.balance}`);
+}
+
 /**Suport functions */
+
+async function searchAccount(agencia, conta) {
+  const account = await accountModel.findOne({
+    agencia: agencia,
+    conta: conta,
+  });
+  return account;
+}
+
+async function transferirValores(contaOrigem, contaDestino) {
+  /**Atualizando a conta de origem */
+  await accountModel.findOneAndUpdate(
+    { agencia: contaOrigem.agencia, conta: contaOrigem.conta },
+    contaOrigem
+  );
+  /**Atualizando a conta de destino */
+  await accountModel.findOneAndUpdate(
+    { agencia: contaDestino.agencia, conta: contaDestino.conta },
+    contaDestino
+  );
+}
+
+async function buscarConta(req, fonte) {
+  let conta = null;
+  if (fonte == 'origem') {
+    conta = await accountModel.findOne({
+      agencia: req.params.agOrigem,
+      conta: req.params.ctOrigem,
+    });
+  } else {
+    conta = await accountModel.findOne({
+      agencia: req.params.agDestino,
+      conta: req.params.ctDestino,
+    });
+  }
+  return conta;
+}
+
 function contaInexistente(res, conta) {
   if (!conta || conta.length === 0) {
-    res.status(404).send('Account not found with informed parameters.');
+    res.status(404).send('Conta não encontrada.');
+    return;
+  }
+}
+
+function saldoInsuficiente(res, conta, valor) {
+  if (conta.balance - valor < 0) {
+    res.status(203).send('Saldo insuficiente para realizar esta operação.');
     return;
   }
 }
@@ -108,4 +169,5 @@ export {
   biggerBalance,
   avgAccounts,
   deposit,
+  withdraw,
 };

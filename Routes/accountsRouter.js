@@ -7,6 +7,7 @@ import {
   biggerBalance,
   avgAccounts,
   deposit,
+  withdraw,
 } from '../Controller/accountController.js';
 
 const app = express();
@@ -55,36 +56,6 @@ app.get('/avg/:agencia', async (req, res) => {
   }
 });
 
-app.get('/private', async (req, res) => {
-  try {
-    /**Buscando CLientes */
-    const accounts = await accountModel.aggregate([
-      {
-        $group: { _id: '$agencia', balance: { $max: '$balance' } },
-      },
-    ]);
-    contaInexistente(res, accounts);
-
-    // /**Transferindo clientes */
-    // let pvtAccount = null;
-    // let pvtAccounts = [];
-    // accounts.forEach(async (account) => {
-    //   pvtAccount = await accountModel.findOne({
-    //     agencia: account._id,
-    //     balance: account.balance,
-    //   });
-    //   pvtAccount.agencia = 99;
-    //   console.log(pvtAccount);
-    //   pvtAccounts.push(pvtAccount);
-    //   //await accountModel.findOneAndUpdate({ _id: pvtAccount._id,  });
-    // });
-    //let biggersAccounts = await accountModel.find({ agencia: 99 });
-    res.send(accounts);
-  } catch (error) {
-    res.status(500).send('Erro de acesso ao endPoint private: ' + error);
-  }
-});
-
 app.put('/deposito/:agencia/:conta/:value', async (req, res) => {
   const agencia = req.params.agencia;
   const conta = req.params.conta;
@@ -97,28 +68,11 @@ app.put('/deposito/:agencia/:conta/:value', async (req, res) => {
 });
 
 app.put('/saque/:agencia/:conta/:value', async (req, res) => {
+  const agencia = req.params.agencia;
+  const conta = req.params.conta;
+  const balance = req.params.value;
   try {
-    const account = await accountModel.findOne({
-      agencia: req.params.agencia,
-      conta: req.params.conta,
-    });
-
-    contaInexistente(res, account);
-    //Atualizando valor do saldo
-    if (account.balance - (Number(req.params.value) + TARIFA_SAQUE) < 0) {
-      res
-        .status(404)
-        .send('Conta com saldo negativo. Não é possivel fazer saque.');
-      return;
-    }
-
-    account.balance -= Number(req.params.value) + TARIFA_SAQUE;
-    const newAccount = await accountModel.findOneAndUpdate(
-      { agencia: req.params.agencia, conta: req.params.conta },
-      account,
-      { new: true }
-    );
-    res.send(`Saldo atual da conta: $${newAccount.balance}`);
+    withdraw(agencia, conta, balance, res);
   } catch (error) {
     res.status(500).send('Erro de acesso ao endpoint saque: ' + error);
   }
@@ -181,6 +135,36 @@ app.put(
     }
   }
 );
+
+app.get('/private', async (req, res) => {
+  try {
+    /**Buscando CLientes */
+    const accounts = await accountModel.aggregate([
+      {
+        $group: { _id: '$agencia', balance: { $max: '$balance' } },
+      },
+    ]);
+    contaInexistente(res, accounts);
+
+    // /**Transferindo clientes */
+    // let pvtAccount = null;
+    // let pvtAccounts = [];
+    // accounts.forEach(async (account) => {
+    //   pvtAccount = await accountModel.findOne({
+    //     agencia: account._id,
+    //     balance: account.balance,
+    //   });
+    //   pvtAccount.agencia = 99;
+    //   console.log(pvtAccount);
+    //   pvtAccounts.push(pvtAccount);
+    //   //await accountModel.findOneAndUpdate({ _id: pvtAccount._id,  });
+    // });
+    //let biggersAccounts = await accountModel.find({ agencia: 99 });
+    res.send(accounts);
+  } catch (error) {
+    res.status(500).send('Erro de acesso ao endPoint private: ' + error);
+  }
+});
 
 async function transferirValores(contaOrigem, contaDestino) {
   /**Atualizando a conta de origem */
