@@ -65,6 +65,15 @@ async function biggerBalance(req, res) {
   res.send(account);
 }
 
+async function avgAccounts(agencia, res) {
+  const account = await accountModel.aggregate([
+    { $group: { _id: '$agencia', media: { $avg: '$balance' } } },
+    { $match: { _id: agencia } },
+  ]);
+  contaInexistente(res, account);
+  res.send(account);
+}
+
 /**Suport functions */
 function contaInexistente(res, conta) {
   if (!conta || conta.length === 0) {
@@ -73,4 +82,11 @@ function contaInexistente(res, conta) {
   }
 }
 
-export { conectarBD, searchAll, consultAccount, smallerBalance, biggerBalance };
+export {
+  conectarBD,
+  searchAll,
+  consultAccount,
+  smallerBalance,
+  biggerBalance,
+  avgAccounts,
+};
