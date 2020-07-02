@@ -1,5 +1,6 @@
 import express from 'express';
 import { accountModel } from '../Model/accounts.js';
+import { searchAll } from '../Controller/accountController.js';
 
 const app = express();
 const TARIFA_SAQUE = 1;
@@ -7,7 +8,7 @@ const TARIFA_TRASFERENCIA_OUTRA_AGENCIA = 8;
 
 app.get('/', async (_, res) => {
   try {
-    const account = await accountModel.find({});
+    const account = await searchAll();
     res.send(account);
   } catch (error) {
     res.status(500).send('Erro de acesso ao endpoint get: ' + error);

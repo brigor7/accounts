@@ -1,12 +1,13 @@
 import mongoose from 'mongoose';
+import { accountModel } from '../Model/accounts.js';
 
-const uri = 'mongodb://localhost:27017/account?retryWrites=true';
+const URI = 'mongodb://localhost:27017/account?retryWrites=true';
 
 //'mongodb+srv://brigor_m0ng0:B@nc0_m0ng0@cluster0-fi27e.gcp.mongodb.net/account?retryWrites=true&w=majority';
 
 function conectarBD() {
   try {
-    mongoose.connect(uri, {
+    mongoose.connect(URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
@@ -16,4 +17,9 @@ function conectarBD() {
   }
 }
 
-export { conectarBD };
+async function searchAll() {
+  const account = await accountModel.find({});
+  return account;
+}
+
+export { conectarBD, searchAll };
