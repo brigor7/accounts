@@ -23,18 +23,24 @@ app.get('/menorSaldo/:tamanho', smallerBalance);
 app.get('/maiorSaldo/:tamanho', biggerBalance);
 app.get('/avg/:agencia', avgAccounts);
 app.put('/deposito/:agencia/:conta/:value', deposit);
+app.put('/saque/:agencia/:conta/:value', withdraw);
 
-app.put('/saque/:agencia/:conta/:value', async (req, res) => {
-  const agencia = req.params.agencia;
-  const conta = req.params.conta;
-  const balance = req.params.value;
+app.put(
+  '/transferencia/:agOrigem/:ctOrigem/:valor/:agDestino/:ctDestino',
+  transfer
+);
+
+async (req, res) => {
   try {
-    const account = await withdraw(agencia, conta, balance);
-    res.send(`Saldo atual da conta: $${account.balance}`);
+    const valorTransferencia = req.params.valor;
+    const contaDestino = await buscarConta(req, 'destino');
+    const contaOrigem = await buscarConta(req, 'origem');
+    const balance = transfer(contaOrigem, contaDestino, valorTransferencia);
+    res.send(`Saldo da conta de origem: $${balance}`);
   } catch (error) {
-    res.status(500).send(error);
+    res.status(500).send('Erro de acesso ao endpoint transferencia: ' + error);
   }
-});
+};
 
 app.delete('/remover/:agencia/:conta', async (req, res, next) => {
   const agencia = req.params.agencia;
@@ -50,23 +56,6 @@ app.delete('/remover/:agencia/:conta', async (req, res, next) => {
     res.status(500).send(error);
   }
 });
-
-app.put(
-  '/transferencia/:agOrigem/:ctOrigem/:valor/:agDestino/:ctDestino',
-  async (req, res) => {
-    try {
-      const valorTransferencia = req.params.valor;
-      const contaDestino = await buscarConta(req, 'destino');
-      const contaOrigem = await buscarConta(req, 'origem');
-      const balance = transfer(contaOrigem, contaDestino, valorTransferencia);
-      res.send(`Saldo da conta de origem: $${balance}`);
-    } catch (error) {
-      res
-        .status(500)
-        .send('Erro de acesso ao endpoint transferencia: ' + error);
-    }
-  }
-);
 
 app.get('/vip', async (req, res) => {
   try {

@@ -99,7 +99,7 @@ async function avgAccounts(req, res) {
   }
 }
 
-async function deposit(agencia, conta, balance) {
+async function deposit(req, res) {
   const agencia = req.params.agencia;
   const conta = req.params.conta;
   const balance = req.params.value;
@@ -119,40 +119,57 @@ async function deposit(agencia, conta, balance) {
   }
 }
 
-async function withdraw(agencia, conta, balance, res) {
+async function withdraw(req, res) {
+  const agencia = req.params.agencia;
+  const conta = req.params.conta;
+  const balance = req.params.value;
   let saque_e_tarifa = Number(balance) + TARIFA_SAQUE;
 
-  const account = await searchAccount(agencia, conta);
-  contaInexistente(account);
-  saldoInsuficiente(account, saque_e_tarifa);
+  try {
+    const account = await searchAccount(agencia, conta);
+    contaInexistente(account);
+    saldoInsuficiente(account, saque_e_tarifa);
 
-  //Atualizando valor do saldo
-  account.balance -= saque_e_tarifa;
-  const newAccount = await accountModel.findOneAndUpdate(
-    { agencia: agencia, conta: conta },
-    account,
-    { new: true }
-  );
-  return newAccount;
+    //Atualizando valor do saldo
+    account.balance -= saque_e_tarifa;
+    const newAccount = await accountModel.findOneAndUpdate(
+      { agencia: agencia, conta: conta },
+      account,
+      { new: true }
+    );
+    res.send(`Saldo atual da conta: $${account.balance}`);
+  } catch (error) {
+    res.status(500).send('Erro de acesso ao endpoint saque: ' + error);
+  }
 }
 
-async function transfer(contaOrigem, contaDestino, valorTransferencia) {
-  contaInexistente(contaOrigem);
-  contaInexistente(contaDestino);
+async function transfer(req, res) {
+  const valorTransferencia = req.params.valor;
+  try {
+    const contaDestino = await buscarConta(req, 'destino');
+    const contaOrigem = await buscarConta(req, 'origem');
 
-  /**Verificando se as contas são da mesma agencia */
-  if (contaOrigem.agencia === contaDestino.agencia) {
-    saldoInsuficiente(contaOrigem, valorTransferencia);
-    contaOrigem.balance -= valorTransferencia;
-    contaDestino.balance += valorTransferencia;
-    await transferirValores(contaOrigem, contaDestino);
-  } else {
-    /**Verificar se saldo da conta ficará negativo */
-    let valorComTarifa = valorTransferencia + TARIFA_TRASFERENCIA_OUTRA_AGENCIA;
-    saldoInsuficiente(contaOrigem, valorComTarifa);
-    contaOrigem.balance -= valorComTarifa;
-    contaDestino.balance += valorTransferencia;
-    await transferirValores(contaOrigem, contaDestino);
+    contaInexistente(contaOrigem);
+    contaInexistente(contaDestino);
+
+    /**Verificando se as contas são da mesma agencia */
+    if (contaOrigem.agencia === contaDestino.agencia) {
+      saldoInsuficiente(contaOrigem, valorTransferencia);
+      contaOrigem.balance -= valorTransferencia;
+      contaDestino.balance += valorTransferencia;
+      await transferirValores(contaOrigem, contaDestino);
+    } else {
+      /**Verificar se saldo da conta ficará negativo */
+      let valorComTarifa =
+        valorTransferencia + TARIFA_TRASFERENCIA_OUTRA_AGENCIA;
+      saldoInsuficiente(contaOrigem, valorComTarifa);
+      contaOrigem.balance -= valorComTarifa;
+      contaDestino.balance += valorTransferencia;
+      await transferirValores(contaOrigem, contaDestino);
+    }
+    res.send(`Saldo da conta de origem: $${contaOrigem.balance}`);
+  } catch (error) {
+    res.status(500).send('Erro de acesso ao endpoint transferencia: ' + error);
   }
 }
 
