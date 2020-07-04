@@ -29,33 +29,7 @@ app.put(
   '/transferencia/:agOrigem/:ctOrigem/:valor/:agDestino/:ctDestino',
   transfer
 );
-
-async (req, res) => {
-  try {
-    const valorTransferencia = req.params.valor;
-    const contaDestino = await buscarConta(req, 'destino');
-    const contaOrigem = await buscarConta(req, 'origem');
-    const balance = transfer(contaOrigem, contaDestino, valorTransferencia);
-    res.send(`Saldo da conta de origem: $${balance}`);
-  } catch (error) {
-    res.status(500).send('Erro de acesso ao endpoint transferencia: ' + error);
-  }
-};
-
-app.delete('/remover/:agencia/:conta', async (req, res, next) => {
-  const agencia = req.params.agencia;
-  const conta = req.params.conta;
-  try {
-    await deleteAccount(agencia, conta);
-    const agenciasAtivas = await searchAgencias(agencia);
-    res.send(
-      'Conta desativada. Total de contas ativas na agência: ' +
-        agenciasAtivas.length
-    );
-  } catch (error) {
-    res.status(500).send(error);
-  }
-});
+app.delete('/remover/:agencia/:conta', deleteAccount);
 
 app.get('/vip', async (req, res) => {
   try {

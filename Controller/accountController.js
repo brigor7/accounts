@@ -173,9 +173,20 @@ async function transfer(req, res) {
   }
 }
 
-async function deleteAccount(agencia, conta) {
-  contaInexistente(await searchAccount(agencia, conta));
-  await desativarConta(agencia, conta);
+async function deleteAccount(req, res) {
+  const agencia = req.params.agencia;
+  const conta = req.params.conta;
+  try {
+    contaInexistente(await searchAccount(agencia, conta));
+    await desativarConta(agencia, conta);
+    const agenciasAtivas = await searchAgencias(agencia);
+    res.send(
+      'Conta desativada. Total de contas ativas na agência: ' +
+        agenciasAtivas.length
+    );
+  } catch (error) {
+    res.status(500).send('Erro de acesso ao endpoint delete: ' + error);
+  }
 }
 
 async function searchAgencias(agencia) {
