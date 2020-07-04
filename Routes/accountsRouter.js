@@ -18,17 +18,7 @@ import {
 const app = express();
 
 app.get('/', searchAll);
-
-app.get('/consulta/:agencia/:conta', async (req, res) => {
-  const agencia = req.params.agencia;
-  const conta = req.params.conta;
-  try {
-    const account = await consultAccount(agencia, conta);
-    res.send(`Saldo: $${account.balance}`);
-  } catch (error) {
-    res.status(500).send('Erro de acesso ao endpoint consulta:  ' + error);
-  }
-});
+app.get('/consulta/:agencia/:conta', consultAccount);
 
 app.get('/menorSaldo/:tamanho', async (req, res) => {
   const tamanho = req.params.tamanho;

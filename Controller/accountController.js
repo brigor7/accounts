@@ -26,13 +26,19 @@ async function searchAll(_, res) {
   }
 }
 
-async function consultAccount(agencia, conta) {
-  const account = await accountModel.findOne({
-    agencia: agencia,
-    conta: conta,
-  });
-  contaInexistente(account);
-  return account;
+async function consultAccount(req, res) {
+  const agencia = req.params.agencia;
+  const conta = req.params.conta;
+  try {
+    const account = await accountModel.findOne({
+      agencia: agencia,
+      conta: conta,
+    });
+    contaInexistente(account);
+    res.send(`Saldo: $${account.balance}`);
+  } catch (error) {
+    res.status(500).send('Erro de acesso ao endpoint consulta:  ' + error);
+  }
 }
 
 async function smallerBalance(tamanho) {
