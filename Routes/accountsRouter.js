@@ -21,17 +21,9 @@ app.get('/', searchAll);
 app.get('/consulta/:agencia/:conta', consultAccount);
 app.get('/menorSaldo/:tamanho', smallerBalance);
 app.get('/maiorSaldo/:tamanho', biggerBalance);
+app.get('/avg/:agencia', avgAccounts);
 
 
-app.get('/avg/:agencia', async (req, res) => {
-  let agencia = Number(req.params.agencia);
-  try {
-    const account = await avgAccounts(agencia);
-    res.send(account);
-  } catch (error) {
-    res.status(500).send('Erro de acesso ao endPoint avg: ' + error);
-  }
-});
 
 app.put('/deposito/:agencia/:conta/:value', async (req, res) => {
   const agencia = req.params.agencia;

@@ -85,13 +85,18 @@ async function biggerBalance(req, res) {
   }
 }
 
-async function avgAccounts(agencia) {
-  const account = await accountModel.aggregate([
-    { $group: { _id: '$agencia', media: { $avg: '$balance' } } },
-    { $match: { _id: agencia } },
-  ]);
-  contaInexistente(account);
-  return account;
+async function avgAccounts(req, res) {
+  let agencia = Number(req.params.agencia);
+  try {
+    const account = await accountModel.aggregate([
+      { $group: { _id: '$agencia', media: { $avg: '$balance' } } },
+      { $match: { _id: agencia } },
+    ]);
+    contaInexistente(account);
+    res.send(account);
+  } catch (error) {
+    res.status(500).send('Erro de acesso ao endPoint avg: ' + error);
+  }
 }
 
 async function deposit(agencia, conta, balance) {
