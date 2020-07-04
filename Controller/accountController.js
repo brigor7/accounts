@@ -63,21 +63,26 @@ async function smallerBalance(req, res) {
   }
 }
 
-async function biggerBalance(tamanho) {
-  const account = await accountModel.aggregate([
-    {
-      $project: {
-        agencia: '$agencia',
-        conta: '$conta',
-        name: '$name',
-        balance: '$balance',
+async function biggerBalance(req, res) {
+  const tamanho = req.params.tamanho;
+  try {
+    const account = await accountModel.aggregate([
+      {
+        $project: {
+          agencia: '$agencia',
+          conta: '$conta',
+          name: '$name',
+          balance: '$balance',
+        },
       },
-    },
-    { $sort: { balance: -1, name: 1 } },
-    { $limit: Number(tamanho) },
-  ]);
-  contaInexistente(account);
-  return account;
+      { $sort: { balance: -1, name: 1 } },
+      { $limit: Number(tamanho) },
+    ]);
+    contaInexistente(account);
+    res.send(account);
+  } catch (error) {
+    res.status(500).send('Erro de acesso ao endPoint menorSaldo: ' + error);
+  }
 }
 
 async function avgAccounts(agencia) {
