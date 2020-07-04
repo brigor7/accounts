@@ -22,20 +22,7 @@ app.get('/consulta/:agencia/:conta', consultAccount);
 app.get('/menorSaldo/:tamanho', smallerBalance);
 app.get('/maiorSaldo/:tamanho', biggerBalance);
 app.get('/avg/:agencia', avgAccounts);
-
-
-
-app.put('/deposito/:agencia/:conta/:value', async (req, res) => {
-  const agencia = req.params.agencia;
-  const conta = req.params.conta;
-  const balance = req.params.value;
-  try {
-    const account = await deposit(agencia, conta, balance);
-    res.send(account);
-  } catch (error) {
-    res.status(500).send('Erro de acesso ao endpoint deposito: ' + error);
-  }
-});
+app.put('/deposito/:agencia/:conta/:value', deposit);
 
 app.put('/saque/:agencia/:conta/:value', async (req, res) => {
   const agencia = req.params.agencia;

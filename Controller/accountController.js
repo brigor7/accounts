@@ -100,18 +100,23 @@ async function avgAccounts(req, res) {
 }
 
 async function deposit(agencia, conta, balance) {
-  const account = await searchAccount(agencia, conta);
+  const agencia = req.params.agencia;
+  const conta = req.params.conta;
+  const balance = req.params.value;
+  try {
+    const account = await searchAccount(agencia, conta);
+    contaInexistente(account);
+    //Atualizando valor do saldo
+    account.balance += Number(balance);
 
-  contaInexistente(account);
-  //Atualizando valor do saldo
-  account.balance += Number(balance);
-
-  const newAccount = await accountModel.findOneAndUpdate(
-    { agencia: agencia, conta: conta },
-    account,
-    { new: true }
-  );
-  return newAccount;
+    const newAccount = await accountModel.findOneAndUpdate(
+      { agencia: agencia, conta: conta },
+      account,
+      { new: true }
+    );
+  } catch (error) {
+    res.status(500).send('Erro de acesso ao endpoint deposito: ' + error);
+  }
 }
 
 async function withdraw(agencia, conta, balance, res) {
