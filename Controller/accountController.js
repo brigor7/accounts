@@ -17,9 +17,13 @@ function conectarBD() {
   }
 }
 
-async function searchAll() {
-  const account = await accountModel.find({});
-  return account;
+async function searchAll(_, res) {
+  try {
+    const account = await accountModel.find({});
+    res.send(account);
+  } catch (error) {
+    res.status(500).send('Erro de acesso ao endpoint get: ' + error);
+  }
 }
 
 async function consultAccount(agencia, conta) {

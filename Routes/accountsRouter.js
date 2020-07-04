@@ -17,14 +17,7 @@ import {
 
 const app = express();
 
-app.get('/', async (_, res) => {
-  try {
-    const account = await searchAll();
-    res.send(account);
-  } catch (error) {
-    res.status(500).send('Erro de acesso ao endpoint get: ' + error);
-  }
-});
+app.get('/', searchAll);
 
 app.get('/consulta/:agencia/:conta', async (req, res) => {
   const agencia = req.params.agencia;
