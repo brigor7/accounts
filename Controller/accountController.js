@@ -196,29 +196,33 @@ async function searchAgencias(agencia) {
   return agenciasAtivas;
 }
 
-async function vipAccounts() {
-  /**Buscando CLientes */
-  const accounts = await accountModel.aggregate([
-    {
-      $group: { _id: '$agencia', balance: { $max: '$balance' } },
-    },
-  ]);
+async function vipAccounts(_, res) {
+  try {
+    /**Buscando CLientes */
+    const accounts = await accountModel.aggregate([
+      {
+        $group: { _id: '$agencia', balance: { $max: '$balance' } },
+      },
+    ]);
 
-  // /**Transferindo clientes */
-  // let pvtAccount = null;
-  // let pvtAccounts = [];
-  // accounts.forEach(async (account) => {
-  //   pvtAccount = await accountModel.findOne({
-  //     agencia: account._id,
-  //     balance: account.balance,
-  //   });
-  //   pvtAccount.agencia = 99;
-  //   console.log(pvtAccount);
-  //   pvtAccounts.push(pvtAccount);
-  //   //await accountModel.findOneAndUpdate({ _id: pvtAccount._id,  });
-  // });
-  //let biggersAccounts = await accountModel.find({ agencia: 99 });
-  return accounts;
+    // /**Transferindo clientes */
+    // let pvtAccount = null;
+    // let pvtAccounts = [];
+    // accounts.forEach(async (account) => {
+    //   pvtAccount = await accountModel.findOne({
+    //     agencia: account._id,
+    //     balance: account.balance,
+    //   });
+    //   pvtAccount.agencia = 99;
+    //   console.log(pvtAccount);
+    //   pvtAccounts.push(pvtAccount);
+    //   //await accountModel.findOneAndUpdate({ _id: pvtAccount._id,  });
+    // });
+    //let biggersAccounts = await accountModel.find({ agencia: 99 });
+    res.send(accounts);
+  } catch (error) {
+    res.status(500).send('Erro de acesso ao endPoint private: ' + error);
+  }
 }
 
 /**Suport functions */

@@ -22,22 +22,13 @@ app.get('/consulta/:agencia/:conta', consultAccount);
 app.get('/menorSaldo/:tamanho', smallerBalance);
 app.get('/maiorSaldo/:tamanho', biggerBalance);
 app.get('/avg/:agencia', avgAccounts);
+app.get('/vip', vipAccounts);
 app.put('/deposito/:agencia/:conta/:value', deposit);
 app.put('/saque/:agencia/:conta/:value', withdraw);
-
 app.put(
   '/transferencia/:agOrigem/:ctOrigem/:valor/:agDestino/:ctDestino',
   transfer
 );
 app.delete('/remover/:agencia/:conta', deleteAccount);
-
-app.get('/vip', async (req, res) => {
-  try {
-    const accounts = await vipAccounts();
-    res.send(accounts);
-  } catch (error) {
-    res.status(500).send('Erro de acesso ao endPoint private: ' + error);
-  }
-});
 
 export { app as router };
