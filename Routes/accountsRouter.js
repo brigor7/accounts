@@ -19,16 +19,7 @@ const app = express();
 
 app.get('/', searchAll);
 app.get('/consulta/:agencia/:conta', consultAccount);
-
-app.get('/menorSaldo/:tamanho', async (req, res) => {
-  const tamanho = req.params.tamanho;
-  try {
-    const account = await smallerBalance(tamanho);
-    res.send(account);
-  } catch (error) {
-    res.status(500).send('Erro de acesso ao endPoint menorSaldo: ' + error);
-  }
-});
+app.get('/menorSaldo/:tamanho', smallerBalance);
 
 app.get('/maiorSaldo/:tamanho', async (req, res) => {
   const tamanho = req.params.tamanho;
